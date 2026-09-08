@@ -1,0 +1,115 @@
+import json
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+history_test_path = r"C:\XLAS\DoAn\XLAS_Project\history_test.json"
+confusion_matrix_path = r"C:\XLAS\DoAn\XLAS_Project\confusion_matrix.txt"
+classification_report_path = r"C:\XLAS\DoAn\XLAS_Project\classification_report.txt"
+
+labels = ["angry", "disgust", "fear", "happy", "neutral", "sad", "surprise"]
+
+# ===============================
+# 1) LOAD TEST METRICS
+# ===============================
+with open(history_test_path, "r") as f:
+    hist = json.load(f)
+
+test_loss = hist["test_loss"]
+test_acc = hist["test_accuracy"]
+
+print("\n=== TEST METRICS ===")
+print("Test Loss     :", test_loss)
+print("Test Accuracy :", test_acc)
+print("====================\n")
+
+# ===============================
+# 2) BAR CHART: TEST LOSS & ACC
+# ===============================
+plt.figure(figsize=(6, 4))
+plt.bar(["Test Loss", "Test Accuracy"], [test_loss, test_acc])
+plt.title("Test Loss & Test Accuracy")
+plt.ylim(0, max(1.5, test_loss + 0.2))
+plt.grid(axis="y")
+plt.tight_layout()
+plt.show()
+
+# ===============================
+# 3) CONFUSION MATRIX
+# ===============================
+cm = np.loadtxt(confusion_matrix_path, dtype=int)
+
+plt.figure(figsize=(8, 6))
+sns.heatmap(
+    cm,
+    annot=True,
+    fmt="d",
+    cmap="Blues",
+    xticklabels=labels,
+    yticklabels=labels
+)
+plt.title("Confusion Matrix (Test Set)")
+plt.xlabel("Predicted Label")
+plt.ylabel("True Label")
+plt.tight_layout()
+plt.show()
+
+# ===============================
+# 4) LOAD & PARSE CLASSIFICATION REPORT
+# ===============================
+with open(classification_report_path, "r") as f:
+    report = f.read()
+
+print("\n=== CLASSIFICATION REPORT ===")
+print(report)
+print("=============================\n")
+
+lines = report.strip().split("\n")
+
+classes = []
+precision = []
+recall = []
+f1 = []
+
+for line in lines:
+    parts = line.split()
+    # Chỉ lấy dòng class, bỏ accuracy / macro / weighted
+    if len(parts) >= 4 and parts[0] in labels:
+        classes.append(parts[0])
+        precision.append(float(parts[1]))
+        recall.append(float(parts[2]))
+        f1.append(float(parts[3]))
+
+# ===============================
+# 5) BAR CHART: F1-SCORE PER CLASS
+# ===============================
+plt.figure(figsize=(9, 5))
+plt.bar(classes, f1)
+plt.ylim(0, 1)
+plt.title("F1-score per Emotion Class (Test Set)")
+plt.xlabel("Emotion")
+plt.ylabel("F1-score")
+plt.grid(axis="y")
+plt.tight_layout()
+plt.show()
+
+# ===============================
+# 6) BAR CHART: PRECISION / RECALL / F1
+# ===============================
+x = np.arange(len(classes))
+width = 0.25
+
+plt.figure(figsize=(10, 5))
+plt.bar(x - width, precision, width, label="Precision")
+plt.bar(x, recall, width, label="Recall")
+plt.bar(x + width, f1, width, label="F1-score")
+
+plt.xticks(x, classes)
+plt.ylim(0, 1)
+plt.xlabel("Emotion")
+plt.ylabel("Score")
+plt.title("Precision / Recall / F1-score per Class (Test Set)")
+plt.legend()
+plt.grid(axis="y")
+plt.tight_layout()
+plt.show()
